@@ -4,6 +4,8 @@
 #include <queue>
 #include <unordered_map>
 #include <string>
+#include <set>
+#include <climits>
 
 using namespace std;
 
@@ -48,7 +50,7 @@ public:
     void BFS(string startLocation) {
         int start = findLocationIndex(startLocation);
         if (start == -1) {
-            cout << "Location not found: " << startLocation << endl;
+            cout << "Location not found." << endl;
             return;
         }
 
@@ -57,8 +59,7 @@ public:
         q.push(start);
         visited[start] = true;
 
-        cout << "BFS starting from location " << startLocation << ": ";
-
+        cout << "BFS traversal starting from " << locations[start] << ": ";
         while (!q.empty()) {
             int v = q.front();
             q.pop();
@@ -74,53 +75,10 @@ public:
         cout << endl;
     }
 
-    void travelTime(string startLocation, string endLocation) {
-        int start = findLocationIndex(startLocation);
-        int end = findLocationIndex(endLocation);
-
-        if (start == -1 || end == -1) {
-            cout << "Invalid locations provided!" << endl;
-            return;
-        }
-
-        cout << "Travel time between " << startLocation << " and " << endLocation << ":" << endl;
-
-        for (auto i : adjList[start]) {
-            if (i.first == end) {
-                cout << "Direct travel time: " << i.second << " mins" << endl;
-                cout << "Number of locations traveled: 2 (including start and end)" << endl;
-                return;
-            }
-        }
-
-        cout << "No direct route found!" << endl;
-    }
-
-    void travelTimeFromHome() {
-        cout << "Travel times and location counts from Home:" << endl;
-
-        for (int i = 1; i < node_count; i++) { // Exclude the start node itself
-            cout << "To " << locations[i] << ": ";
-
-            bool directRoute = false;
-            for (auto edge : adjList[0]) {
-                if (edge.first == i) {
-                    cout << edge.second << " mins, ";
-                    cout << "Locations: 2 (including start and end)" << endl;
-                    directRoute = true;
-                    break;
-                }
-            }
-
-            if (!directRoute)
-                cout << "No direct route available!" << endl;
-        }
-    }
-
     void DFS(string startLocation) {
         int start = findLocationIndex(startLocation);
         if (start == -1) {
-            cout << "Location not found: " << startLocation << endl;
+            cout << "Location not found." << endl;
             return;
         }
 
@@ -128,8 +86,7 @@ public:
         stack<int> s;
         s.push(start);
 
-        cout << "DFS starting from location " << startLocation << ": ";
-
+        cout << "DFS traversal starting from " << locations[start] << ": ";
         while (!s.empty()) {
             int v = s.top();
             s.pop();
@@ -148,6 +105,87 @@ public:
         cout << endl;
     }
 
+    void travelTimeFromHome() {
+        vector<int> travelTime(node_count, INT_MAX);
+        vector<int> locationsCount(node_count, INT_MAX);
+        vector<bool> visited(node_count, false);
+
+        int start = 0; // Home index
+        travelTime[start] = 0;
+        locationsCount[start] = 0;
+
+        priority_queue<Pair, vector<Pair>, greater<Pair>> pq;
+        pq.push({0, start}); // {travel time, location}
+
+        while (!pq.empty()) {
+            int time = pq.top().first;
+            int location = pq.top().second;
+            pq.pop();
+
+            if (visited[location]) continue;
+            visited[location] = true;
+
+            for (auto &[next, weight] : adjList[location]) {
+                if (time + weight < travelTime[next]) {
+                    travelTime[next] = time + weight;
+                    locationsCount[next] = locationsCount[location] + 1;
+                    pq.push({travelTime[next], next});
+                }
+            }
+        }
+
+        // Output travel times
+        cout << "Travel time and locations count from Home:" << endl;
+        for (int i = 0; i < node_count; i++) {
+            cout << locations[i] << ": ";
+            if (travelTime[i] == INT_MAX) {
+                cout << "No route available" << endl;
+            } else {
+                cout << travelTime[i] << " mins, through " << locationsCount[i] << " locations" << endl;
+            }
+        }
+    }
+
+    void findMST() {
+        vector<bool> inMST(node_count, false); // Track visited nodes
+        vector<int> key(node_count, INT_MAX); // Minimum edge weights
+        vector<int> parent(node_count, -1);   // Track parents in MST
+        int start = 0;                        // Start at node 0 (Home)
+
+        // Priority queue to select edges with minimum weights
+        priority_queue<Pair, vector<Pair>, greater<Pair>> pq;
+        pq.push({0, start}); // (weight, node)
+        key[start] = 0;
+
+        while (!pq.empty()) {
+            int u = pq.top().second; // Extract node with minimum key value
+            pq.pop();
+
+            if (inMST[u]) continue; // If already in MST, skip
+            inMST[u] = true;
+
+            // Traverse all adjacent vertices of u
+            for (auto &[v, weight] : adjList[u]) {
+                if (!inMST[v] && weight < key[v]) {
+                    // If a smaller edge weight is found
+                    key[v] = weight;
+                    pq.push({weight, v});
+                    parent[v] = u;
+                }
+            }
+        }
+
+        // Output the MST
+        cout << "Minimum Spanning Tree (MST):" << endl;
+        int totalWeight = 0;
+        for (int i = 1; i < node_count; i++) {
+            if (parent[i] != -1) {
+                cout << locations[parent[i]] << " --(" << key[i] << " mins)--> " << locations[i] << endl;
+                totalWeight += key[i];
+            }
+        }
+        cout << "Total weight of MST: " << totalWeight << " mins" << endl;
+    }
 
 private:
     int findLocationIndex(string locationName) {
@@ -155,7 +193,7 @@ private:
             if (locations[i] == locationName)
                 return i;
         }
-        return -1; // Location not found
+        return -1; // Not found
     }
 };
 
@@ -175,11 +213,8 @@ int main() {
     grp.printGraph();
     grp.BFS("Home");
     grp.DFS("Home");
-    grp.travelTime("Home", "Library");
-    grp.travelTime("Home", "Cinema");
     grp.travelTimeFromHome();
-
+    grp.findMST();
 
     return 0;
 }
-
