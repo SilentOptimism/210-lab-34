@@ -7,12 +7,12 @@
 
 using namespace std;
 
-int node_count = 13; // Number of nodes
+int node_count = 13; // Total number of nodes
 
 struct Edge {
     int src;
     int dest;
-    int weight;
+    int weight; // Travel time in minutes
 };
 
 typedef pair<int, int> Pair;
@@ -20,11 +20,11 @@ typedef pair<int, int> Pair;
 class Graph {
 public:
     vector<vector<Pair>> adjList;
-    unordered_map<int, string> locationMap; // Map to store node to location name
+    vector<string> locations;
 
-    Graph(vector<Edge> const &edges, unordered_map<int, string> const &locations) {
+    Graph(vector<Edge> const &edges, vector<string> const &locationNames) {
         adjList.resize(node_count);
-        locationMap = locations; // Copy location mapping
+        locations = locationNames;
 
         for (auto &edge : edges) {
             int src = edge.src;
@@ -36,27 +36,33 @@ public:
     }
 
     void printGraph() {
-        cout << "Graph's adjacency list (locations):" << endl;
+        cout << "Graph's adjacency list (locations and travel times):" << endl;
         for (int i = 0; i < adjList.size(); i++) {
-            cout << locationMap[i] << " --> ";
+            cout << locations[i] << " -->";
             for (Pair v : adjList[i])
-                cout << "(" << locationMap[v.first] << ", " << v.second << ") ";
+                cout << " (" << locations[i] << " -> " << locations[v.first] << ", " << v.second << " mins)";
             cout << endl;
         }
     }
 
-    void BFS(int start) {
+    void BFS(string startLocation) {
+        int start = findLocationIndex(startLocation);
+        if (start == -1) {
+            cout << "Location not found: " << startLocation << endl;
+            return;
+        }
+
         vector<bool> visited(node_count, false);
         queue<int> q;
         q.push(start);
         visited[start] = true;
 
-        cout << "BFS starting from " << locationMap[start] << ": ";
+        cout << "BFS starting from location " << startLocation << ": ";
 
         while (!q.empty()) {
             int v = q.front();
             q.pop();
-            cout << locationMap[v] << " ";
+            cout << locations[v] << " ";
 
             for (auto i : adjList[v]) {
                 if (!visited[i.first]) {
@@ -68,12 +74,61 @@ public:
         cout << endl;
     }
 
-    void DFS(int start) {
+    void travelTime(string startLocation, string endLocation) {
+        int start = findLocationIndex(startLocation);
+        int end = findLocationIndex(endLocation);
+
+        if (start == -1 || end == -1) {
+            cout << "Invalid locations provided!" << endl;
+            return;
+        }
+
+        cout << "Travel time between " << startLocation << " and " << endLocation << ":" << endl;
+
+        for (auto i : adjList[start]) {
+            if (i.first == end) {
+                cout << "Direct travel time: " << i.second << " mins" << endl;
+                cout << "Number of locations traveled: 2 (including start and end)" << endl;
+                return;
+            }
+        }
+
+        cout << "No direct route found!" << endl;
+    }
+
+    void travelTimeFromHome() {
+        cout << "Travel times and location counts from Home:" << endl;
+
+        for (int i = 1; i < node_count; i++) { // Exclude the start node itself
+            cout << "To " << locations[i] << ": ";
+
+            bool directRoute = false;
+            for (auto edge : adjList[0]) {
+                if (edge.first == i) {
+                    cout << edge.second << " mins, ";
+                    cout << "Locations: 2 (including start and end)" << endl;
+                    directRoute = true;
+                    break;
+                }
+            }
+
+            if (!directRoute)
+                cout << "No direct route available!" << endl;
+        }
+    }
+
+    void DFS(string startLocation) {
+        int start = findLocationIndex(startLocation);
+        if (start == -1) {
+            cout << "Location not found: " << startLocation << endl;
+            return;
+        }
+
         vector<bool> visited(node_count, false);
         stack<int> s;
         s.push(start);
 
-        cout << "DFS starting from " << locationMap[start] << ": ";
+        cout << "DFS starting from location " << startLocation << ": ";
 
         while (!s.empty()) {
             int v = s.top();
@@ -81,7 +136,7 @@ public:
 
             if (!visited[v]) {
                 visited[v] = true;
-                cout << locationMap[v] << " ";
+                cout << locations[v] << " ";
             }
 
             for (auto i : adjList[v]) {
@@ -92,6 +147,16 @@ public:
         }
         cout << endl;
     }
+
+
+private:
+    int findLocationIndex(string locationName) {
+        for (int i = 0; i < locations.size(); i++) {
+            if (locations[i] == locationName)
+                return i;
+        }
+        return -1; // Location not found
+    }
 };
 
 int main() {
@@ -100,25 +165,21 @@ int main() {
         {3, 7, 15}, {7, 8, 10}, {8, 9, 5}, {9, 10, 8}, {10, 11, 7}, {11, 12, 3}, {12, 7, 6}
     };
 
-    unordered_map<int, string> locations = {
-        {0, "Park Entrance"},
-        {1, "Visitor Center"},
-        {2, "Lake"},
-        {3, "Playground"},
-        {4, "Garden"},
-        {7, "Mountain Trail Start"},
-        {8, "Trail Midpoint"},
-        {9, "Trail Overlook"},
-        {10, "Picnic Area"},
-        {11, "River Crossing"},
-        {12, "Mountain Summit"}
+    vector<string> locationNames = {
+        "Home", "Supermarket", "Park", "Library", "School",
+        "Cafe", "Gym", "Mall", "Cinema", "Stadium", "Hospital", "Airport", "Train Station"
     };
 
-    Graph grp(edges, locations);
+    Graph grp(edges, locationNames);
 
     grp.printGraph();
-    grp.BFS(0);
-    grp.DFS(0);
+    grp.BFS("Home");
+    grp.DFS("Home");
+    grp.travelTime("Home", "Library");
+    grp.travelTime("Home", "Cinema");
+    grp.travelTimeFromHome();
+
 
     return 0;
 }
+
