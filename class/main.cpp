@@ -2,11 +2,12 @@
 #include <vector>
 #include <stack>
 #include <queue>
-#include <unordered_set>
+#include <unordered_map>
+#include <string>
 
 using namespace std;
 
-int node_count = 11;
+int node_count = 13; // Number of nodes
 
 struct Edge {
     int src;
@@ -19,9 +20,12 @@ typedef pair<int, int> Pair;
 class Graph {
 public:
     vector<vector<Pair>> adjList;
+    unordered_map<int, string> locationMap; // Map to store node to location name
 
-    Graph(vector<Edge> const &edges) {
+    Graph(vector<Edge> const &edges, unordered_map<int, string> const &locations) {
         adjList.resize(node_count);
+        locationMap = locations; // Copy location mapping
+
         for (auto &edge : edges) {
             int src = edge.src;
             int dest = edge.dest;
@@ -32,11 +36,11 @@ public:
     }
 
     void printGraph() {
-        cout << "Graph's adjacency list:" << endl;
+        cout << "Graph's adjacency list (locations):" << endl;
         for (int i = 0; i < adjList.size(); i++) {
-            cout << i << " -->";
+            cout << locationMap[i] << " --> ";
             for (Pair v : adjList[i])
-                cout << "(" << i << ", " << v.first << ", " << v.second << ")";
+                cout << "(" << locationMap[v.first] << ", " << v.second << ") ";
             cout << endl;
         }
     }
@@ -47,12 +51,12 @@ public:
         q.push(start);
         visited[start] = true;
 
-        cout << "BFS starting from node " << start << ": ";
+        cout << "BFS starting from " << locationMap[start] << ": ";
 
         while (!q.empty()) {
             int v = q.front();
             q.pop();
-            cout << v << " ";
+            cout << locationMap[v] << " ";
 
             for (auto i : adjList[v]) {
                 if (!visited[i.first]) {
@@ -69,7 +73,7 @@ public:
         stack<int> s;
         s.push(start);
 
-        cout << "DFS starting from node " << start << ": ";
+        cout << "DFS starting from " << locationMap[start] << ": ";
 
         while (!s.empty()) {
             int v = s.top();
@@ -77,7 +81,7 @@ public:
 
             if (!visited[v]) {
                 visited[v] = true;
-                cout << v << " ";
+                cout << locationMap[v] << " ";
             }
 
             for (auto i : adjList[v]) {
@@ -92,14 +96,25 @@ public:
 
 int main() {
     vector<Edge> edges = {
-    {0, 1, 12}, {0, 2, 8}, {0, 3, 21}, {2, 3, 6}, {2, 4, 4},
-    {3, 7, 15}, {7, 8, 10}, {8, 9, 5}, {9, 10, 8}, {10, 11, 7}, {11, 12, 3}, {12, 7, 6}
+        {0, 1, 12}, {0, 2, 8}, {0, 3, 21}, {2, 3, 6}, {2, 4, 4},
+        {3, 7, 15}, {7, 8, 10}, {8, 9, 5}, {9, 10, 8}, {10, 11, 7}, {11, 12, 3}, {12, 7, 6}
     };
 
+    unordered_map<int, string> locations = {
+        {0, "Park Entrance"},
+        {1, "Visitor Center"},
+        {2, "Lake"},
+        {3, "Playground"},
+        {4, "Garden"},
+        {7, "Mountain Trail Start"},
+        {8, "Trail Midpoint"},
+        {9, "Trail Overlook"},
+        {10, "Picnic Area"},
+        {11, "River Crossing"},
+        {12, "Mountain Summit"}
+    };
 
-
-
-    Graph grp = Graph(edges);
+    Graph grp(edges, locations);
 
     grp.printGraph();
     grp.BFS(0);
@@ -107,4 +122,3 @@ int main() {
 
     return 0;
 }
-
