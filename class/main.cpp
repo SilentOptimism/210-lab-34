@@ -9,12 +9,12 @@
 
 using namespace std;
 
-int node_count = 13; // Total number of nodes
+int node_count = 13;
 
 struct Edge {
     int src;
     int dest;
-    int weight; // Travel time in minutes
+    int weight;
 };
 
 typedef pair<int, int> Pair;
@@ -152,7 +152,6 @@ public:
         vector<int> parent(node_count, -1);   // Track parents in MST
         int start = 0;                        // Start at node 0 (Home)
 
-        // Priority queue to select edges with minimum weights
         priority_queue<Pair, vector<Pair>, greater<Pair>> pq;
         pq.push({0, start}); // (weight, node)
         key[start] = 0;
@@ -167,7 +166,6 @@ public:
             // Traverse all adjacent vertices of u
             for (auto &[v, weight] : adjList[u]) {
                 if (!inMST[v] && weight < key[v]) {
-                    // If a smaller edge weight is found
                     key[v] = weight;
                     pq.push({weight, v});
                     parent[v] = u;
@@ -210,11 +208,43 @@ int main() {
 
     Graph grp(edges, locationNames);
 
-    grp.printGraph();
-    grp.BFS("Home");
-    grp.DFS("Home");
-    grp.travelTimeFromHome();
-    grp.findMST();
+    while (true) {
+        cout << "\nMenu:" << endl;
+        cout << "1. Print Graph" << endl;
+        cout << "2. BFS Traversal" << endl;
+        cout << "3. DFS Traversal" << endl;
+        cout << "4. Travel Time from Home" << endl;
+        cout << "5. Find Minimum Spanning Tree (MST)" << endl;
+        cout << "6. Exit" << endl;
+        cout << "Enter your choice: ";
+        int choice;
+        cin >> choice;
+
+        if (choice == 1) {
+            grp.printGraph();
+        } else if (choice == 2) {
+            cout << "Enter start location: ";
+            string start;
+            cin >> ws;
+            getline(cin, start);
+            grp.BFS(start);
+        } else if (choice == 3) {
+            cout << "Enter start location: ";
+            string start;
+            cin >> ws;
+            getline(cin, start);
+            grp.DFS(start);
+        } else if (choice == 4) {
+            grp.travelTimeFromHome();
+        } else if (choice == 5) {
+            grp.findMST();
+        } else if (choice == 6) {
+            cout << "Exiting program. Goodbye!" << endl;
+            break;
+        } else {
+            cout << "Invalid choice! Please try again." << endl;
+        }
+    }
 
     return 0;
 }
